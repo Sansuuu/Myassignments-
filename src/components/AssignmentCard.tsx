@@ -7,7 +7,8 @@ import {
 import { DeadlineBadge } from './DeadlineBadge';
 import { PriorityBadge } from './PriorityBadge';
 import {
-  Bot,
+  Sparkles,
+  Cpu,
   Paperclip,
   ExternalLink,
   UserCheck,
@@ -21,6 +22,8 @@ import {
   EyeOff,
   ArrowUpRight,
 } from 'lucide-react';
+import { buildAssignmentPrompt, launchInChatGPT, launchInGemini } from '../utils/aiLaunch';
+import { useApp } from '../context/AppContext';
 
 interface AssignmentCardProps {
   assignment: Assignment;
@@ -28,7 +31,7 @@ interface AssignmentCardProps {
   isAdmin?: boolean;
   onSelect: (assignment: Assignment) => void;
   onStatusChange: (status: AssignmentStatus) => void;
-  onAskAI: (assignment: Assignment) => void;
+  onAskAI?: (assignment: Assignment) => void;
   onEdit?: (assignment: Assignment) => void;
   onDelete?: (assignmentId: string) => void;
   onDuplicate?: (assignment: Assignment) => void;
@@ -41,15 +44,27 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
   isAdmin = false,
   onSelect,
   onStatusChange,
-  onAskAI,
   onEdit,
   onDelete,
   onDuplicate,
   onTogglePublish,
 }) => {
+  const { showToast } = useApp();
   const currentStatus = progress?.status || 'not_started';
   const isCompleted = currentStatus === 'completed';
   const isInProgress = currentStatus === 'in_progress';
+
+  const handleLaunchGemini = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const prompt = buildAssignmentPrompt(assignment);
+    launchInGemini(prompt, (msg, type) => showToast(msg, undefined, type));
+  };
+
+  const handleLaunchChatGPT = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const prompt = buildAssignmentPrompt(assignment);
+    launchInChatGPT(prompt, (msg, type) => showToast(msg, undefined, type));
+  };
 
   return (
     <div
@@ -193,15 +208,24 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
           )}
         </div>
 
-        {/* AI Tutor & Admin Actions */}
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        {/* AI Launchers & Admin Actions */}
+        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
           <button
-            onClick={() => onAskAI(assignment)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-mono font-bold uppercase rounded-xs bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800 transition-colors"
-            title="Ask CSE AI Tutor about this problem"
+            onClick={handleLaunchGemini}
+            className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-mono font-bold uppercase rounded-xs bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800 transition-colors"
+            title="Copy prompt & open in Google Gemini"
           >
-            <Bot className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <span>AI TUTOR</span>
+            <Sparkles className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+            <span>GEMINI</span>
+          </button>
+
+          <button
+            onClick={handleLaunchChatGPT}
+            className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-mono font-bold uppercase rounded-xs bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 transition-colors"
+            title="Pre-fill & open in OpenAI ChatGPT"
+          >
+            <Cpu className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+            <span>GPT</span>
           </button>
 
           {isAdmin && (

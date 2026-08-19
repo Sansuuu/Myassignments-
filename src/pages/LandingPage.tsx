@@ -149,7 +149,7 @@ export const LandingPage: React.FC = () => {
             </h1>
 
             <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 max-w-xl font-normal leading-relaxed">
-              Track deadlines, organize assignments for all 9 academic subjects, record your personal progress, and debug code with the integrated CSE AI Tutor.
+              Track deadlines, organize coursework for all core academic subjects, record your personal progress, and debug code with the integrated CSE AI Tutor.
             </p>
 
             {/* Feature Numbers Strip */}

@@ -69,16 +69,12 @@ app.post("/api/ai/tutor", async (req, res) => {
 
     const systemInstruction = `You are "CSE AI Tutor", the official intelligent study assistant for students of "BTech 1st Semester CSE" (Computer Science & Engineering).
 
-The curriculum subjects include:
-1. Programming Practices Lab - I (Code: 25B17CIT72) - C programming, problem solving, pointer manipulation, arrays, modular design.
-2. Mathematics - I (Code: 25B11MAM111) - Calculus, differential equations, linear algebra, matrices, rank, eigenvalues, infinite series.
-3. Software Development Fundamentals Lab - I (Code: 25B17CIT71) - Algorithm design, debugging, practical code implementations, Unix tools.
-4. Physics Lab - I (Code: 25B17PHP171) - Optics, lasers, error analysis, experimental measurements, spectrometer experiments.
-5. Basic Electronics Lab (Code: 25B17EEE171) - Diodes, transistors, logic gates, breadboard circuits, oscilloscope measurements.
-6. Engineering Drawing & Design (Code: 25B17MEM171) - Orthographic projections, isometric views, sectional views, dimensioning standards, CAD basics.
-7. Software Development Fundamentals - I (Code: 25B11CIT111) - Computational thinking, data structures introduction, memory management, algorithms.
-8. Physics - I (Code: 25B11PH111) - Wave optics, quantum mechanics fundamentals, electromagnetic theory, thermodynamics, material physics.
-9. Basic Electronics (Code: 25B11EEE111) - Semiconductor physics, PN junctions, BJT/FET circuits, operational amplifiers, Boolean algebra.
+The core curriculum subjects include:
+1. Software Development Fundamentals - I (Code: 25B11CIT111) - Computational thinking, problem decomposition, structured C/Python programming, memory concepts, and algorithmic foundations.
+2. Mathematics - I (Code: 25B11MAM111) - Differential calculus, matrices, eigenvalues/eigenvectors, linear algebra, rank, multivariable calculus, and infinite series.
+3. Physics - I (Code: 25B11PH111) - Wave optics, interference, diffraction, polarization, quantum mechanics fundamentals, electromagnetic theory, and laser physics.
+4. Basic Electronics (Code: 25B11EEE111) - Semiconductor physics, PN junctions, rectifiers, BJT/FET biasing, operational amplifiers, number systems, and digital logic circuits.
+5. Engineering Drawing & Design (Code: 25B17MEM171) - Orthographic projections, isometric drawing, sectional views, dimensioning standards, and CAD principles.
 
 Pedagogical Guidelines:
 - Act as an encouraging, patient academic mentor.
@@ -105,17 +101,51 @@ Pedagogical Guidelines:
       parts: [{ text: promptWithContext }],
     });
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: contents,
-      config: {
-        systemInstruction: systemInstruction,
-        temperature: 0.7,
-      },
-    });
+    // Allow user to supply their own Gemini API key or fall back to system key
+    const userApiKey = (req.headers["x-gemini-api-key"] as string) || req.body.customApiKey;
+    const client = userApiKey ? new GoogleGenAI({ apiKey: userApiKey.trim() }) : ai;
 
-    const replyText = response.text || "I'm here to help you study! What concept would you like to explore?";
-    res.json({ reply: replyText });
+    // Candidate models for automatic fallback during high demand/availability spikes (prioritizing stable high-throughput Flash variants)
+    const candidateModels = [
+      "gemini-3.6-flash",
+      "gemini-flash-latest",
+      "gemini-3.6-flash-lite",
+      "gemini-3.7-flash",
+      "gemini-3.7-flash-lite",
+    ];
+    let lastError: any = null;
+    let replyText: string | null = null;
+    let usedModel = "";
+
+    for (let pass = 0; pass < 2 && replyText === null; pass++) {
+      for (const modelName of candidateModels) {
+        try {
+          const response = await client.models.generateContent({
+            model: modelName,
+            contents: contents,
+            config: {
+              systemInstruction: systemInstruction,
+              temperature: 0.7,
+            },
+          });
+          replyText = response.text || "I'm here to help you study! What concept would you like to explore?";
+          usedModel = modelName;
+          break;
+        } catch (err: any) {
+          lastError = err;
+          const errMsg = String(err?.message || "");
+          if (errMsg.includes("503") || errMsg.includes("429") || errMsg.includes("UNAVAILABLE") || errMsg.includes("RESOURCE_EXHAUSTED")) {
+            await new Promise((r) => setTimeout(r, 800));
+          }
+        }
+      }
+    }
+
+    if (replyText !== null) {
+      return res.json({ reply: replyText, model: usedModel });
+    }
+
+    throw lastError || new Error("All Gemini model endpoints are currently busy. Please try again in a few seconds.");
   } catch (error: any) {
     console.error("Error in /api/ai/tutor:", error);
     res.status(500).json({

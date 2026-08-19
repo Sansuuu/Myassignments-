@@ -31,7 +31,7 @@ export const MobileNav: React.FC = () => {
     },
     { id: 'subjects', label: 'COURSES', icon: BookOpen },
     { id: 'calendar', label: 'DATES', icon: CalendarDays },
-    { id: 'ai-tutor', label: 'AI', icon: Sparkles },
+    { id: 'ai-launch', label: 'AI LAUNCH', icon: Sparkles },
     { id: 'profile', label: 'USER', icon: User },
   ];
 

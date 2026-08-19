@@ -108,7 +108,7 @@ export const DashboardPage: React.FC = () => {
             ACADEMIC DASHBOARD
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 font-mono">
-            Welcome back, <span className="font-bold text-slate-900 dark:text-white">{studentName || 'Student'}</span>. Track all 9 CSE subjects, track deadlines, and study with AI.
+            Welcome back, <span className="font-bold text-slate-900 dark:text-white">{studentName || 'Student'}</span>. Track all {subjects.length} core CSE subjects, view deadlines, and study with AI.
           </p>
         </div>
 
@@ -186,7 +186,7 @@ export const DashboardPage: React.FC = () => {
               onChange={(e) => setFilters((prev) => ({ ...prev, subjectId: e.target.value }))}
               className="w-full px-3 py-2 rounded-xs border-2 border-slate-900 dark:border-slate-700 bg-slate-50 dark:bg-[#181818] text-slate-900 dark:text-white"
             >
-              <option value="all">ALL 9 CSE COURSES</option>
+              <option value="all">ALL {subjects.length} CORE COURSES</option>
               {subjects.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.code} - {s.name}

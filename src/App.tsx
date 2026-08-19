@@ -10,7 +10,6 @@ import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { MobileNav } from './components/MobileNav';
 import { AssignmentModal } from './components/AssignmentModal';
-import { AITutorChat } from './components/AITutorChat';
 import { CalendarView } from './components/CalendarView';
 import { ToastContainer } from './components/ToastContainer';
 
@@ -22,7 +21,7 @@ import { SubjectsPage } from './pages/SubjectsPage';
 import { CompletedPage } from './pages/CompletedPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { AdminPage } from './pages/AdminPage';
-import { Terminal } from 'lucide-react';
+import { AILaunchPage } from './pages/AILaunchPage';
 
 const MainLayout: React.FC = () => {
   const { currentUser, studentName, isAdmin, loading } = useAuth();
@@ -31,7 +30,6 @@ const MainLayout: React.FC = () => {
     selectedAssignment,
     setSelectedAssignment,
     markStatus,
-    openAITutorWithAssignment,
   } = useApp();
 
   // If loading auth state, render brutalist terminal loader
@@ -79,27 +77,7 @@ const MainLayout: React.FC = () => {
           {activeTab === 'completed' && <CompletedPage />}
           {activeTab === 'profile' && <ProfilePage />}
           {activeTab === 'admin' && (isAdmin ? <AdminPage /> : <DashboardPage />)}
-          {activeTab === 'ai-tutor' && (
-            <div className="h-[calc(100vh-140px)] max-w-4xl mx-auto bg-white dark:bg-[#121212] rounded-md border-2 border-slate-900 dark:border-slate-800 brutal-shadow overflow-hidden flex flex-col font-sans">
-              <div className="p-4 border-b-2 border-slate-900 dark:border-slate-800 bg-white dark:bg-[#181818] flex items-center justify-between">
-                <div>
-                  <div className="font-mono text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">
-                    INTELLIGENT COMPANION // GEMINI 2.5 FLASH
-                  </div>
-                  <h2 className="text-base font-black uppercase text-slate-900 dark:text-white flex items-center gap-2 font-display">
-                    <Terminal className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    CSE AI STUDY TUTOR & CODE ANALYZER
-                  </h2>
-                  <p className="font-mono text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                    Ask questions on C programming, discrete math proofs, circuit analysis, or assignment guidelines.
-                  </p>
-                </div>
-              </div>
-              <div className="flex-1 relative">
-                <AITutorChat />
-              </div>
-            </div>
-          )}
+          {activeTab === 'ai-launch' && <AILaunchPage />}
         </main>
       </div>
 
@@ -113,10 +91,6 @@ const MainLayout: React.FC = () => {
           onClose={() => setSelectedAssignment(null)}
           onStatusChange={(status) => {
             markStatus(selectedAssignment.id, selectedAssignment.subjectId, status);
-          }}
-          onAskAI={(a) => {
-            openAITutorWithAssignment(a);
-            setSelectedAssignment(null);
           }}
         />
       )}

@@ -91,7 +91,7 @@ export const AdminPage: React.FC = () => {
             CLASS ADMINISTRATION
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 font-mono">
-            Create coursework, manage 9 CSE subjects, audit student submissions, and view class statistics.
+            Create coursework, manage {subjects.length} core CSE subjects, audit student submissions, and view class statistics.
           </p>
         </div>
 
@@ -159,7 +159,7 @@ export const AdminPage: React.FC = () => {
                 onChange={(e) => setSelectedSubjectFilter(e.target.value)}
                 className="w-full px-3 py-2 rounded-xs border-2 border-slate-900 dark:border-slate-700 bg-slate-50 dark:bg-[#181818] text-slate-900 dark:text-white"
               >
-                <option value="all">ALL 9 SUBJECTS</option>
+                <option value="all">ALL {subjects.length} CORE SUBJECTS</option>
                 {subjects.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.code} - {s.name}

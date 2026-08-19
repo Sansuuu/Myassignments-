@@ -238,7 +238,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const openAITutorWithAssignment = (assignment: Assignment) => {
     setAiTutorContext(assignment);
-    setActiveTab('ai-tutor');
+    setActiveTab('ai-launch');
   };
 
   // Published assignments visible to student (Admins see drafts too)

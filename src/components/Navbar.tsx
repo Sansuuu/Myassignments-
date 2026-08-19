@@ -103,17 +103,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen }
               </button>
             )}
 
-            {/* AI Tutor Quick Access */}
+            {/* AI Launch Quick Access */}
             <button
-              onClick={() => setActiveTab('ai-tutor')}
+              onClick={() => setActiveTab('ai-launch')}
               className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold uppercase rounded-xs transition-all ${
-                activeTab === 'ai-tutor'
+                activeTab === 'ai-launch'
                   ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 brutal-shadow-sm'
                   : 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-2 border-blue-300 dark:border-blue-800'
               }`}
             >
               <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-              <span>AI TUTOR</span>
+              <span>AI LAUNCH</span>
             </button>
 
             {/* User Dropdown */}

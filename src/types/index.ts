@@ -74,7 +74,7 @@ export type ActiveTab =
   | 'subjects'
   | 'calendar'
   | 'completed'
-  | 'ai-tutor'
+  | 'ai-launch'
   | 'profile'
   | 'admin';
 

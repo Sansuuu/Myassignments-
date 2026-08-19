@@ -41,7 +41,7 @@ export function saveLocalProgressCache(map: Record<string, StudentProgress>) {
   }
 }
 
-// 1. SEED INITIAL SUBJECTS IF EMPTY
+// 1. SEED INITIAL SUBJECTS IF EMPTY & PURGE LEGACY LABS
 export async function ensureInitialSubjects(): Promise<Subject[]> {
   const fallbackSubjects: Subject[] = INITIAL_SUBJECTS.map((s) => ({
     id: s.code,
@@ -50,23 +50,27 @@ export async function ensureInitialSubjects(): Promise<Subject[]> {
 
   try {
     const snap = await getDocs(collection(db, SUBJECTS_COL));
-    if (!snap.empty) {
-      const existing: Subject[] = [];
-      snap.forEach((d) => {
-        const data = d.data();
-        existing.push({
-          id: d.id,
-          name: data.name || '',
-          code: data.code || '',
-          order: data.order ?? 99,
-          description: data.description,
-          color: data.color,
-        });
+    const coreCodes = new Set(INITIAL_SUBJECTS.map((s) => s.code));
+    const toDeleteDocs: string[] = [];
+
+    snap.forEach((d) => {
+      const data = d.data();
+      const code = data.code || d.id;
+      const name = (data.name || '').toLowerCase();
+      if (!coreCodes.has(code) || name.includes('lab')) {
+        toDeleteDocs.push(d.id);
+      }
+    });
+
+    if (toDeleteDocs.length > 0) {
+      const deleteBatch = writeBatch(db);
+      toDeleteDocs.forEach((docId) => {
+        deleteBatch.delete(doc(db, SUBJECTS_COL, docId));
       });
-      return existing.sort((a, b) => a.order - b.order);
+      await deleteBatch.commit().catch((e) => console.warn('Could not delete legacy lab doc:', e));
     }
 
-    // Seed the 9 subjects into Firestore
+    // Ensure all 5 core subjects exist with up-to-date orders and titles
     const batch = writeBatch(db);
     const created: Subject[] = [];
 
@@ -80,11 +84,11 @@ export async function ensureInitialSubjects(): Promise<Subject[]> {
         description: subj.description,
         color: subj.color,
       };
-      batch.set(docRef, subjectData);
+      batch.set(docRef, subjectData, { merge: true });
       created.push(subjectData);
     });
 
-    await batch.commit();
+    await batch.commit().catch(() => {});
     return created.sort((a, b) => a.order - b.order);
   } catch (error) {
     console.warn('Initial subjects load from Firestore failed, using static curriculum:', error);
@@ -92,13 +96,15 @@ export async function ensureInitialSubjects(): Promise<Subject[]> {
   }
 }
 
-// 2. REAL-TIME SUBJECTS LISTENER
+// 2. REAL-TIME SUBJECTS LISTENER (STRICT 5 CORE SUBJECTS)
 export function subscribeToSubjects(
   onUpdate: (subjects: Subject[]) => void,
   onError?: (err: any) => void
 ) {
   try {
     const q = query(collection(db, SUBJECTS_COL), orderBy('order', 'asc'));
+    const coreCodes = new Set(INITIAL_SUBJECTS.map((s) => s.code));
+
     return onSnapshot(
       q,
       (snapshot) => {
@@ -109,16 +115,21 @@ export function subscribeToSubjects(
         const subjects: Subject[] = [];
         snapshot.forEach((d) => {
           const data = d.data();
-          subjects.push({
-            id: d.id,
-            name: data.name,
-            code: data.code,
-            order: data.order ?? 99,
-            description: data.description,
-            color: data.color,
-          });
+          const code = data.code || d.id;
+          const name = (data.name || '').toLowerCase();
+          // STRICT filter: Must be one of the coreCodes and NOT contain lab
+          if (coreCodes.has(code) && !name.includes('lab')) {
+            subjects.push({
+              id: d.id,
+              name: data.name,
+              code: data.code || d.id,
+              order: data.order ?? 99,
+              description: data.description,
+              color: data.color,
+            });
+          }
         });
-        onUpdate(subjects.sort((a, b) => a.order - b.order));
+        onUpdate(subjects.length ? subjects.sort((a, b) => a.order - b.order) : INITIAL_SUBJECTS.map((s) => ({ id: s.code, ...s })));
       },
       (error) => {
         console.warn('Subjects Firestore sync error, falling back to local list:', error);

@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Assignment, AssignmentStatus, StudentProgress } from '../types';
 import { DeadlineBadge } from './DeadlineBadge';
 import { PriorityBadge } from './PriorityBadge';
 import {
   X,
-  Bot,
+  Sparkles,
+  Cpu,
+  Copy,
+  Check,
   Paperclip,
   ExternalLink,
   UserCheck,
@@ -16,15 +19,17 @@ import {
   HelpCircle,
   Download,
   Clock,
-  Sparkles,
+  ArrowUpRight,
 } from 'lucide-react';
+import { buildAssignmentPrompt, launchInChatGPT, launchInGemini, copyTextToClipboard } from '../utils/aiLaunch';
+import { useApp } from '../context/AppContext';
 
 interface AssignmentModalProps {
   assignment: Assignment | null;
   progress?: StudentProgress;
   onClose: () => void;
   onStatusChange: (status: AssignmentStatus) => void;
-  onAskAI: (assignment: Assignment) => void;
+  onAskAI?: (assignment: Assignment) => void;
 }
 
 export const AssignmentModal: React.FC<AssignmentModalProps> = ({
@@ -32,13 +37,35 @@ export const AssignmentModal: React.FC<AssignmentModalProps> = ({
   progress,
   onClose,
   onStatusChange,
-  onAskAI,
 }) => {
+  const { showToast } = useApp();
+  const [copied, setCopied] = useState(false);
+
   if (!assignment) return null;
 
   const currentStatus = progress?.status || 'not_started';
   const isCompleted = currentStatus === 'completed';
   const isInProgress = currentStatus === 'in_progress';
+
+  const handleLaunchGemini = () => {
+    const prompt = buildAssignmentPrompt(assignment);
+    launchInGemini(prompt, (msg, type) => showToast(msg, undefined, type));
+  };
+
+  const handleLaunchChatGPT = () => {
+    const prompt = buildAssignmentPrompt(assignment);
+    launchInChatGPT(prompt, (msg, type) => showToast(msg, undefined, type));
+  };
+
+  const handleCopyPrompt = async () => {
+    const prompt = buildAssignmentPrompt(assignment);
+    const success = await copyTextToClipboard(prompt);
+    if (success) {
+      setCopied(true);
+      showToast('Assignment Prompt Copied! 📋', 'Ready to paste into your AI assistant.', 'success');
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs overflow-y-auto">
@@ -117,7 +144,7 @@ export const AssignmentModal: React.FC<AssignmentModalProps> = ({
           {assignment.instructions && (
             <div>
               <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
-                Submission Guidelines & Lab Rules
+                Submission Guidelines & Course Instructions
               </h3>
               <div className="p-4 rounded-xs bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40 text-xs sm:text-sm text-blue-900 dark:text-blue-200 whitespace-pre-wrap leading-relaxed font-mono">
                 {assignment.instructions}
@@ -203,14 +230,37 @@ export const AssignmentModal: React.FC<AssignmentModalProps> = ({
             )}
           </div>
 
-          {/* AI Tutor Launcher */}
-          <button
-            onClick={() => onAskAI(assignment)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-mono font-bold uppercase rounded-xs bg-slate-900 text-white dark:bg-white dark:text-slate-900 transition-all brutal-shadow-sm hover:translate-y-px"
-          >
-            <Sparkles className="w-4 h-4 text-blue-400 dark:text-blue-600" />
-            <span>Consult CSE AI Tutor →</span>
-          </button>
+          {/* AI Launchers */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleCopyPrompt}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-mono font-bold uppercase rounded-xs border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#181818] text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              title="Copy academic prompt to clipboard"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copied ? 'COPIED' : 'COPY PROMPT'}</span>
+            </button>
+
+            <button
+              onClick={handleLaunchGemini}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-mono font-bold uppercase rounded-xs bg-blue-600 hover:bg-blue-700 text-white transition-all brutal-shadow-sm hover:translate-y-px"
+              title="Open problem in Google Gemini"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>GEMINI</span>
+              <ArrowUpRight className="w-3 h-3 opacity-75" />
+            </button>
+
+            <button
+              onClick={handleLaunchChatGPT}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-mono font-bold uppercase rounded-xs bg-emerald-600 hover:bg-emerald-700 text-white transition-all brutal-shadow-sm hover:translate-y-px"
+              title="Pre-fill problem in ChatGPT"
+            >
+              <Cpu className="w-3.5 h-3.5" />
+              <span>CHATGPT</span>
+              <ArrowUpRight className="w-3 h-3 opacity-75" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

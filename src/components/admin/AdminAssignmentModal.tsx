@@ -240,7 +240,7 @@ export const AdminAssignmentModal: React.FC<AdminAssignmentModalProps> = ({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Lab Sheet 3: Dynamic Memory Allocation in C"
+              placeholder="e.g. Unit 3 Problem Set: Pointer Arithmetic & Modular Design in C"
               className="w-full px-3.5 py-2.5 font-mono text-xs rounded-xs border-2 border-slate-900 dark:border-slate-700 bg-white dark:bg-[#181818] text-slate-900 dark:text-white focus:outline-hidden"
               required
             />
@@ -341,7 +341,7 @@ export const AdminAssignmentModal: React.FC<AdminAssignmentModalProps> = ({
               rows={4}
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
-              placeholder="1. Create a zip named RollNo_Lab3.zip&#10;2. Include source .c files and test outputs&#10;3. Submit on portal before deadline."
+              placeholder="1. Write clean, modular code with structured comments&#10;2. Include test cases and edge-condition analysis&#10;3. Submit on portal before the due date."
               className="w-full px-3.5 py-2.5 font-mono text-xs rounded-xs border-2 border-slate-900 dark:border-slate-700 bg-white dark:bg-[#181818] text-slate-900 dark:text-white focus:outline-hidden"
             />
           </div>

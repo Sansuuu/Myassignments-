@@ -62,15 +62,15 @@ export const SubjectsPage: React.FC = () => {
       <div className="flex flex-wrap items-end justify-between gap-4 pb-4 border-b-2 border-slate-900 dark:border-slate-800">
         <div>
           <div className="font-mono text-xs font-bold uppercase tracking-widest text-slate-500">
-            CSE CURRICULUM // 9 CORE MODULES
+            CSE CURRICULUM // CORE MODULES
           </div>
           <h1 className="text-2xl sm:text-4xl font-black uppercase text-slate-900 dark:text-[#F5F5F0] tracking-tight font-display mt-1">
-            {selectedSubject ? `${selectedSubject.name}` : 'ALL 9 SUBJECTS'}
+            {selectedSubject ? `${selectedSubject.name}` : `ALL ${subjects.length} CORE SUBJECTS`}
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 font-mono">
             {selectedSubject
               ? `Course Code: ${selectedSubject.code} — ${selectedSubject.description || ''}`
-              : 'Browse structured coursework, lab files, and problems per subject.'}
+              : 'Browse structured coursework, problem sheets, and theoretical modules per subject.'}
           </p>
         </div>
 

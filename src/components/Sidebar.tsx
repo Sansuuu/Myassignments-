@@ -55,10 +55,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       icon: CalendarDays,
     },
     {
-      id: 'ai-tutor',
-      label: 'CSE AI TUTOR',
+      id: 'ai-launch',
+      label: 'AI LAUNCHPAD',
       icon: Sparkles,
-      badge: 'AI',
+      badge: 'LAUNCH',
       badgeColor: 'bg-blue-600 text-white font-bold',
     },
     {
@@ -119,7 +119,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     className={`w-4 h-4 ${
                       isActive
                         ? 'text-white dark:text-slate-900'
-                        : item.id === 'ai-tutor'
+                        : item.id === 'ai-launch'
                         ? 'text-blue-500'
                         : 'text-slate-400'
                     }`}
