@@ -22,6 +22,7 @@ const ASSIGNMENTS_COL = 'assignments';
 const PROGRESS_COL = 'studentProgress';
 const USERS_COL = 'users';
 const LOCAL_PROGRESS_CACHE = 'cse_hub_progress_cache';
+const LOCAL_ASSIGNMENTS_CACHE = 'cse_hub_assignments_cache';
 
 // Helper for local progress cache
 export function getLocalProgressCache(): Record<string, StudentProgress> {
@@ -39,6 +40,37 @@ export function saveLocalProgressCache(map: Record<string, StudentProgress>) {
   } catch {
     // Ignored
   }
+}
+
+// Helper for local assignments cache & immediate UI updates
+export function getLocalAssignmentsCache(): Assignment[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_ASSIGNMENTS_CACHE);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveLocalAssignmentsCache(list: Assignment[]) {
+  try {
+    localStorage.setItem(LOCAL_ASSIGNMENTS_CACHE, JSON.stringify(list));
+  } catch {
+    // Ignored
+  }
+}
+
+const assignmentSubscribers = new Set<(assignments: Assignment[]) => void>();
+
+function notifyAssignmentSubscribers(list: Assignment[]) {
+  saveLocalAssignmentsCache(list);
+  assignmentSubscribers.forEach((cb) => {
+    try {
+      cb(list);
+    } catch (e) {
+      console.warn('Assignment subscriber notification error:', e);
+    }
+  });
 }
 
 // 1. SEED INITIAL SUBJECTS IF EMPTY & PURGE LEGACY LABS
@@ -149,15 +181,27 @@ export function subscribeToAssignments(
   onUpdate: (assignments: Assignment[]) => void,
   onError?: (err: any) => void
 ) {
+  assignmentSubscribers.add(onUpdate);
+
+  // Immediately push cached items if available for instant display
+  const cached = getLocalAssignmentsCache();
+  if (cached.length > 0) {
+    onUpdate(cached);
+  }
+
+  let unsubFirestore = () => {};
+
   try {
     const q = query(collection(db, ASSIGNMENTS_COL));
-    return onSnapshot(
+    unsubFirestore = onSnapshot(
       q,
       (snapshot) => {
-        const assignments: Assignment[] = [];
+        const remoteAssignments: Assignment[] = [];
+        const remoteMap = new Map<string, Assignment>();
+
         snapshot.forEach((d) => {
           const data = d.data();
-          assignments.push({
+          const item: Assignment = {
             id: d.id,
             title: data.title || 'Untitled Assignment',
             description: data.description || '',
@@ -178,19 +222,36 @@ export function subscribeToAssignments(
             createdBy: data.createdBy,
             createdAt: data.createdAt || new Date().toISOString(),
             updatedAt: data.updatedAt || new Date().toISOString(),
-          });
+          };
+          remoteAssignments.push(item);
+          remoteMap.set(d.id, item);
         });
-        onUpdate(assignments);
+
+        // Merge remote assignments with any locally staged/created assignments
+        const localList = getLocalAssignmentsCache();
+        const mergedList = [...remoteAssignments];
+
+        localList.forEach((localItem) => {
+          if (!remoteMap.has(localItem.id)) {
+            mergedList.unshift(localItem);
+          }
+        });
+
+        notifyAssignmentSubscribers(mergedList);
       },
       (error) => {
-        console.warn('Assignments Firestore sync error:', error);
+        console.warn('Assignments Firestore sync error, using local cache:', error);
         if (onError) onError(error);
       }
     );
   } catch (err) {
     console.warn('Failed to attach assignments listener:', err);
-    return () => {};
   }
+
+  return () => {
+    assignmentSubscribers.delete(onUpdate);
+    unsubFirestore();
+  };
 }
 
 // 4. REAL-TIME STUDENT PROGRESS FOR CURRENT USER
@@ -305,25 +366,43 @@ export async function updateStudentProgressStatus(
   }
 }
 
+export function sanitizeFirestorePayload<T extends Record<string, any>>(obj: T): T {
+  const clean: Record<string, any> = {};
+  Object.keys(obj).forEach((key) => {
+    if (obj[key] !== undefined) {
+      clean[key] = obj[key];
+    }
+  });
+  return clean as T;
+}
+
 // 7. ASSIGNMENT MANAGEMENT (ADMIN)
 export async function createAssignment(
   data: Omit<Assignment, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<string> {
   const docRef = doc(collection(db, ASSIGNMENTS_COL));
   const now = new Date().toISOString();
-  const newAssignment: Assignment = {
+  const rawAssignment: Assignment = {
     id: docRef.id,
     ...data,
+    published: data.published !== false,
     createdAt: now,
     updatedAt: now,
   };
 
+  const cleanAssignment = sanitizeFirestorePayload(rawAssignment);
+
+  // Immediate optimistic update for zero UI lag
+  const current = getLocalAssignmentsCache();
+  const updated = [rawAssignment, ...current.filter((a) => a.id !== rawAssignment.id)];
+  notifyAssignmentSubscribers(updated);
+
   try {
-    const firestoreWrite = setDoc(docRef, newAssignment);
-    const timeout = new Promise<void>((resolve) => setTimeout(resolve, 4000));
+    const firestoreWrite = setDoc(docRef, cleanAssignment);
+    const timeout = new Promise<void>((resolve) => setTimeout(resolve, 5000));
     await Promise.race([firestoreWrite, timeout]);
   } catch (err) {
-    console.warn('Firestore setDoc slow or offline, proceeding:', err);
+    console.warn('Firestore setDoc slow or offline, proceeding with local assignment state:', err);
   }
 
   return docRef.id;
@@ -334,23 +413,32 @@ export async function updateAssignment(
   data: Partial<Assignment>
 ): Promise<void> {
   const docRef = doc(db, ASSIGNMENTS_COL, id);
-  const payload = {
+  const payload = sanitizeFirestorePayload({
     ...data,
     updatedAt: new Date().toISOString(),
-  };
+  });
+
+  // Immediate optimistic update
+  const current = getLocalAssignmentsCache();
+  const updated = current.map((a) => (a.id === id ? { ...a, ...payload } : a));
+  notifyAssignmentSubscribers(updated);
 
   try {
     const firestoreWrite = updateDoc(docRef, payload);
-    const timeout = new Promise<void>((resolve) => setTimeout(resolve, 4000));
+    const timeout = new Promise<void>((resolve) => setTimeout(resolve, 5000));
     await Promise.race([firestoreWrite, timeout]);
   } catch (err) {
-    console.warn('Firestore updateDoc slow or offline, proceeding:', err);
+    console.warn('Firestore updateDoc slow or offline, proceeding with local state:', err);
   }
 }
 
 export async function deleteAssignment(id: string): Promise<void> {
-  await deleteDoc(doc(db, ASSIGNMENTS_COL, id));
+  const current = getLocalAssignmentsCache();
+  const updated = current.filter((a) => a.id !== id);
+  notifyAssignmentSubscribers(updated);
+
   try {
+    await deleteDoc(doc(db, ASSIGNMENTS_COL, id));
     const progQuery = query(collection(db, PROGRESS_COL), where('assignmentId', '==', id));
     const progSnap = await getDocs(progQuery);
     if (!progSnap.empty) {

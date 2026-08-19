@@ -31,7 +31,7 @@ export const AdminAssignmentModal: React.FC<AdminAssignmentModalProps> = ({
   onClose,
 }) => {
   const { currentUser } = useAuth();
-  const { subjects, showToast } = useApp();
+  const { subjects, showToast, resetFilters } = useApp();
 
   const [subjectId, setSubjectId] = useState<string>('');
   const [title, setTitle] = useState('');
@@ -141,32 +141,34 @@ export const AdminAssignmentModal: React.FC<AdminAssignmentModalProps> = ({
         }
       }
 
-      const payload = {
+      const payload: Record<string, any> = {
         title: title.trim(),
         description: description.trim(),
-        subjectId: selectedSubject.id,
+        subjectId: selectedSubject.code || selectedSubject.id,
         subjectName: selectedSubject.name,
         subjectCode: selectedSubject.code,
         dueDate,
         dueTime: dueTime || '23:59',
         priority,
-        teacher: teacher.trim() || undefined,
-        instructions: instructions.trim() || undefined,
-        externalUrl: externalUrl.trim() || undefined,
-        published,
-        attachmentUrl: finalAttachmentUrl,
-        attachmentName: finalAttachmentName,
-        attachmentSize: finalAttachmentSize,
-        attachmentType: finalAttachmentType,
-        createdBy: currentUser?.uid,
+        published: published ?? true,
       };
 
+      if (teacher.trim()) payload.teacher = teacher.trim();
+      if (instructions.trim()) payload.instructions = instructions.trim();
+      if (externalUrl.trim()) payload.externalUrl = externalUrl.trim();
+      if (finalAttachmentUrl) payload.attachmentUrl = finalAttachmentUrl;
+      if (finalAttachmentName) payload.attachmentName = finalAttachmentName;
+      if (finalAttachmentSize !== undefined) payload.attachmentSize = finalAttachmentSize;
+      if (finalAttachmentType) payload.attachmentType = finalAttachmentType;
+      if (currentUser?.uid) payload.createdBy = currentUser.uid;
+
       if (assignmentToEdit) {
-        await updateAssignment(assignmentToEdit.id, payload);
+        await updateAssignment(assignmentToEdit.id, payload as any);
         showToast('Assignment Updated', 'Changes have been saved and published.', 'success');
       } else {
-        await createAssignment(payload);
-        showToast('Assignment Created', 'New assignment is now available for students.', 'success');
+        await createAssignment(payload as any);
+        resetFilters();
+        showToast('Assignment Created 🎉', 'New assignment is now live and visible to all students.', 'success');
       }
 
       onClose();

@@ -17,6 +17,7 @@ import {
   subscribeToStudentProgress,
   subscribeToAllProgress,
   updateStudentProgressStatus,
+  getLocalProgressCache,
 } from '../services/db';
 import { parseAssignmentDueDate, getDeadlineInfo, sortAssignmentsByUrgency } from '../utils/dateUtils';
 import { INITIAL_SUBJECTS } from '../utils/constants';
@@ -63,10 +64,19 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser, studentName, isAdmin } = useAuth();
+  const { currentUser, userProfile, studentName, isAdmin } = useAuth();
+
+  // Resolve active student user ID across Firebase Auth & Local Sessions
+  const activeUserId = useMemo(() => {
+    if (currentUser?.uid) return currentUser.uid;
+    if (userProfile?.userId) return userProfile.userId;
+    const stored = localStorage.getItem('cse_hub_local_uid');
+    if (stored) return stored;
+    return 'local_student_default';
+  }, [currentUser?.uid, userProfile?.userId]);
 
   const [subjects, setSubjects] = useState<Subject[]>(() =>
-    INITIAL_SUBJECTS.map((s, idx) => ({ id: `subj_${idx + 1}`, ...s }))
+    INITIAL_SUBJECTS.map((s) => ({ id: s.code, ...s }))
   );
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [studentProgressMap, setStudentProgressMap] = useState<Record<string, StudentProgress>>({});
@@ -112,8 +122,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     let unsubSubjects = () => {};
     let unsubAssignments = () => {};
-    let unsubProgress = () => {};
-    let unsubAllProgress = () => {};
 
     const initData = async () => {
       try {
@@ -146,14 +154,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, []);
 
-  // Listen to student personal progress when currentUser is present
+  // Listen to student personal progress for active user session
   useEffect(() => {
-    if (!currentUser) {
-      setStudentProgressMap({});
+    if (!activeUserId) {
+      setStudentProgressMap(getLocalProgressCache());
       return;
     }
 
-    const unsub = subscribeToStudentProgress(currentUser.uid, (map) => {
+    const unsub = subscribeToStudentProgress(activeUserId, (map) => {
       setStudentProgressMap(map);
     });
 
@@ -168,7 +176,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       unsub();
       unsubAll();
     };
-  }, [currentUser?.uid, isAdmin]);
+  }, [activeUserId, isAdmin]);
 
   // Mark status helper
   const markStatus = async (
@@ -176,15 +184,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     subjectId: string,
     newStatus: AssignmentStatus
   ): Promise<void> => {
-    if (!currentUser) return;
+    const userId = activeUserId;
     const currentName = studentName || 'Student';
 
     // Optimistic local state update
     setStudentProgressMap((prev) => ({
       ...prev,
       [assignmentId]: {
-        id: `${currentUser.uid}_${assignmentId}`,
-        userId: currentUser.uid,
+        id: `${userId}_${assignmentId}`,
+        userId: userId,
         studentName: currentName,
         assignmentId,
         subjectId,
@@ -196,7 +204,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     try {
       await updateStudentProgressStatus(
-        currentUser.uid,
+        userId,
         currentName,
         assignmentId,
         subjectId,
