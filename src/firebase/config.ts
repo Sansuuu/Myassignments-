@@ -2,7 +2,19 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import firebaseConfig from '../../firebase-applet-config.json';
+
+// Production-ready Firebase web configuration using environment variables
+// with safe project defaults for seamless AI Studio preview and Vercel builds.
+export const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyA-Zng0O7Z8b347xLlGtsOMOdnMxFg9Trw',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'smart-quota-kgtt6.firebaseapp.com',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'smart-quota-kgtt6',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'smart-quota-kgtt6.firebasestorage.app',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '91605473967',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:91605473967:web:d17623f51b5b755373d25a',
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || '',
+  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || 'ai-studio-cseclasshub-77f0e6b1-1234-4732-bedc-b501f2bde641',
+};
 
 // Initialize Firebase App
 export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
