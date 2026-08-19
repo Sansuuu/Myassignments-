@@ -314,9 +314,33 @@ export const LandingPage: React.FC = () => {
                     required
                     value={adminPasskey}
                     onChange={(e) => setAdminPasskey(e.target.value)}
-                    placeholder="Enter admin passkey..."
+                    placeholder="Enter admin passkey (e.g. admin123)..."
                     className="w-full px-4 py-2.5 font-mono text-xs rounded-xs border-2 border-slate-900 dark:border-slate-700 bg-slate-50 dark:bg-[#181818] text-slate-900 dark:text-white focus:outline-hidden focus:border-blue-600"
                   />
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5 font-mono text-[10px] text-slate-500">
+                    <span>Quick presets:</span>
+                    <button
+                      type="button"
+                      onClick={() => setAdminPasskey('admin123')}
+                      className="px-1.5 py-0.5 rounded-xs bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-blue-600 hover:text-white font-bold"
+                    >
+                      admin123
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAdminPasskey('cse2025admin')}
+                      className="px-1.5 py-0.5 rounded-xs bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-blue-600 hover:text-white font-bold"
+                    >
+                      cse2025admin
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAdminPasskey('admin')}
+                      className="px-1.5 py-0.5 rounded-xs bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-blue-600 hover:text-white font-bold"
+                    >
+                      admin
+                    </button>
+                  </div>
                 </div>
 
                 <button

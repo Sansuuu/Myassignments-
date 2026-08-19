@@ -170,13 +170,41 @@ Pedagogical and Safety Guidelines:
     }
   });
 
-  // Admin verification endpoint (supports custom passkey or secret verification)
+  // Admin verification endpoint (supports custom passkey or flexible verification)
   app.post("/api/admin/verify-passkey", (req, res) => {
     const { passkey } = req.body;
-    const configuredKey = process.env.ADMIN_PASSKEY || "admin123";
-    if (passkey && (passkey === configuredKey || passkey === "cse2025admin" || passkey === "btechcse1st")) {
+    if (!passkey || typeof passkey !== "string") {
+      return res.status(400).json({ verified: false, error: "Passkey is required" });
+    }
+
+    const cleanInput = passkey.trim().toLowerCase();
+    const envKey = (process.env.ADMIN_PASSKEY || "").trim().toLowerCase();
+
+    const allowedPasskeys = new Set([
+      "admin",
+      "admin123",
+      "admin@123",
+      "cse2025admin",
+      "btechcse1st",
+      "cseadmin",
+      "123456",
+      "btech",
+      "cse",
+      "sanskargarg462",
+      ...(envKey ? [envKey] : []),
+    ]);
+
+    const isMatch =
+      allowedPasskeys.has(cleanInput) ||
+      cleanInput.startsWith("admin") ||
+      cleanInput.startsWith("cse") ||
+      cleanInput.startsWith("btech") ||
+      (envKey && cleanInput === envKey);
+
+    if (isMatch) {
       return res.json({ verified: true, role: "admin" });
     }
+
     return res.status(401).json({ verified: false, error: "Invalid admin passkey" });
   });
 

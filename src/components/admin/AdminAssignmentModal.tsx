@@ -346,21 +346,69 @@ export const AdminAssignmentModal: React.FC<AdminAssignmentModalProps> = ({
             />
           </div>
 
-          {/* File Attachment */}
-          <div>
-            <label className="block font-mono text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider mb-1.5">
+          {/* File Attachment & PDF URL */}
+          <div className="space-y-2">
+            <label className="block font-mono text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">
               ATTACHMENT (PDF / ZIP / DOCX)
             </label>
-            <div className="flex items-center gap-3 p-3 rounded-xs border-2 border-dashed border-slate-400 dark:border-slate-700 bg-white dark:bg-[#181818]">
-              <input
-                type="file"
-                onChange={handleFileChange}
-                className="text-xs font-mono text-slate-600 dark:text-slate-300"
-              />
+
+            <div className="p-3.5 rounded-xs border-2 border-dashed border-slate-400 dark:border-slate-700 bg-white dark:bg-[#181818] space-y-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.zip,.png,.jpg"
+                  onChange={handleFileChange}
+                  className="text-xs font-mono text-slate-600 dark:text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-xs file:border-2 file:border-slate-900 dark:file:border-slate-700 file:bg-slate-100 dark:file:bg-slate-800 file:text-xs file:font-mono file:font-bold file:uppercase cursor-pointer"
+                />
+
+                {(selectedFile || attachmentName) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedFile(null);
+                      setAttachmentUrl(undefined);
+                      setAttachmentName(undefined);
+                    }}
+                    className="text-xs font-mono font-bold text-rose-600 dark:text-rose-400 hover:underline uppercase"
+                  >
+                    Clear File
+                  </button>
+                )}
+              </div>
+
+              {selectedFile && (
+                <div className="p-2.5 rounded-xs bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 flex items-center justify-between font-mono text-xs text-blue-900 dark:text-blue-200">
+                  <div className="flex items-center gap-2 truncate">
+                    <Paperclip className="w-4 h-4 shrink-0 text-blue-600 dark:text-blue-400" />
+                    <span className="font-bold truncate">{selectedFile.name}</span>
+                    <span className="text-[10px] text-slate-500">({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)</span>
+                  </div>
+                  <span className="font-bold text-[10px] uppercase bg-blue-600 text-white px-2 py-0.5 rounded-xs">
+                    STAGED FOR FAST SAVE
+                  </span>
+                </div>
+              )}
+
               {attachmentName && !selectedFile && (
-                <span className="font-mono text-xs text-blue-600 dark:text-blue-400 font-bold truncate">
-                  Current: {attachmentName}
-                </span>
+                <div className="flex items-center gap-2 font-mono text-xs text-emerald-700 dark:text-emerald-400">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span className="font-bold">Attached: {attachmentName}</span>
+                </div>
+              )}
+
+              {uploadProgress !== null && (
+                <div className="space-y-1">
+                  <div className="flex justify-between font-mono text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase">
+                    <span>Processing PDF Attachment...</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full h-2 rounded-xs bg-slate-200 dark:bg-slate-800 overflow-hidden border border-slate-400 dark:border-slate-700">
+                    <div
+                      className="h-full bg-blue-600 dark:bg-blue-400 transition-all duration-200"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
               )}
             </div>
           </div>
