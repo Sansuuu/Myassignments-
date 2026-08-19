@@ -1,0 +1,216 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile for student or admin",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Unique user ID matching Firebase Auth UID"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Student display name",
+          "maxLength": 100
+        },
+        "role": {
+          "type": "string",
+          "description": "Role of the user: student or admin",
+          "enum": ["student", "admin"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of user creation"
+        },
+        "lastActive": {
+          "type": "string",
+          "description": "ISO timestamp of last activity"
+        }
+      },
+      "required": ["userId", "displayName", "role", "createdAt"]
+    },
+    "Subject": {
+      "title": "Subject",
+      "description": "One of the 9 academic subjects for BTech 1st Semester CSE",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Subject Name",
+          "maxLength": 150
+        },
+        "code": {
+          "type": "string",
+          "description": "Official subject code e.g. 25B11MAM111",
+          "maxLength": 50
+        },
+        "order": {
+          "type": "number",
+          "description": "Display order"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["name", "code", "order"]
+    },
+    "Assignment": {
+      "title": "Assignment",
+      "description": "Class assignment created by admin",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Assignment title",
+          "maxLength": 200
+        },
+        "description": {
+          "type": "string",
+          "description": "Assignment description and details",
+          "maxLength": 5000
+        },
+        "subjectId": {
+          "type": "string",
+          "description": "Subject ID"
+        },
+        "subjectName": {
+          "type": "string",
+          "description": "Subject Name",
+          "maxLength": 150
+        },
+        "subjectCode": {
+          "type": "string",
+          "description": "Subject Code e.g. 25B11MAM111",
+          "maxLength": 50
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "Due date in YYYY-MM-DD format",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "dueTime": {
+          "type": "string",
+          "description": "Due time in HH:mm 24-hr format",
+          "pattern": "^\\d{2}:\\d{2}$"
+        },
+        "priority": {
+          "type": "string",
+          "description": "Priority level",
+          "enum": ["low", "medium", "high"]
+        },
+        "attachmentUrl": {
+          "type": "string",
+          "description": "URL of attachment file in storage or external"
+        },
+        "attachmentName": {
+          "type": "string",
+          "description": "Original file name of attachment",
+          "maxLength": 200
+        },
+        "attachmentSize": {
+          "type": "number",
+          "description": "File size in bytes"
+        },
+        "attachmentType": {
+          "type": "string",
+          "description": "MIME type or file extension",
+          "maxLength": 100
+        },
+        "externalUrl": {
+          "type": "string",
+          "description": "Optional external resource link"
+        },
+        "teacher": {
+          "type": "string",
+          "description": "Optional instructor or teacher name",
+          "maxLength": 100
+        },
+        "instructions": {
+          "type": "string",
+          "description": "Optional specific submission guidelines",
+          "maxLength": 3000
+        },
+        "published": {
+          "type": "boolean",
+          "description": "Whether the assignment is live for students"
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "UID of admin creator"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp"
+        }
+      },
+      "required": ["title", "subjectId", "subjectName", "subjectCode", "dueDate", "dueTime", "priority", "published"]
+    },
+    "StudentProgress": {
+      "title": "StudentProgress",
+      "description": "Personal assignment progress for a student",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Student Auth UID"
+        },
+        "studentName": {
+          "type": "string",
+          "description": "Student Display Name",
+          "maxLength": 100
+        },
+        "assignmentId": {
+          "type": "string",
+          "description": "ID of the assignment"
+        },
+        "subjectId": {
+          "type": "string",
+          "description": "ID of the subject"
+        },
+        "status": {
+          "type": "string",
+          "description": "Progress status",
+          "enum": ["not_started", "in_progress", "completed"]
+        },
+        "completedAt": {
+          "type": "string",
+          "description": "ISO timestamp when marked completed"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last status update"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional personal student notes",
+          "maxLength": 1000
+        }
+      },
+      "required": ["userId", "assignmentId", "status", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles"
+    },
+    "/subjects/{subjectId}": {
+      "schema": { "$ref": "#/entities/Subject" },
+      "description": "Academic subjects list"
+    },
+    "/assignments/{assignmentId}": {
+      "schema": { "$ref": "#/entities/Assignment" },
+      "description": "Class assignments"
+    },
+    "/studentProgress/{progressId}": {
+      "schema": { "$ref": "#/entities/StudentProgress" },
+      "description": "Student progress records indexed by {userId}_{assignmentId}"
+    }
+  }
+}

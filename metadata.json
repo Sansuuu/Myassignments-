@@ -1,0 +1,6 @@
+{
+  "name": "CSE Class Hub",
+  "description": "Academic assignment management, personal progress tracker, and AI study assistant for BTech 1st Semester CSE.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
