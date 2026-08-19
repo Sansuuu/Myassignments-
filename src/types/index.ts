@@ -72,6 +72,7 @@ export type ActiveTab =
   | 'dashboard'
   | 'today'
   | 'subjects'
+  | 'class-finder'
   | 'calendar'
   | 'completed'
   | 'ai-launch'

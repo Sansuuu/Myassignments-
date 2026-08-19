@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   User,
   Terminal,
+  MapPin,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -46,8 +47,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     },
     {
       id: 'subjects',
-      label: '9 SUBJECTS',
+      label: '5 SUBJECTS',
       icon: BookOpen,
+    },
+    {
+      id: 'class-finder',
+      label: 'CLASS FINDER',
+      icon: MapPin,
+      badge: 'LIVE',
+      badgeColor: 'bg-emerald-600 text-white font-bold',
     },
     {
       id: 'calendar',

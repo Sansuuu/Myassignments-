@@ -22,6 +22,7 @@ import { CompletedPage } from './pages/CompletedPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { AdminPage } from './pages/AdminPage';
 import { AILaunchPage } from './pages/AILaunchPage';
+import { ClassFinderPage } from './pages/ClassFinderPage';
 
 const MainLayout: React.FC = () => {
   const { currentUser, studentName, isAdmin, loading } = useAuth();
@@ -73,6 +74,7 @@ const MainLayout: React.FC = () => {
           {activeTab === 'dashboard' && <DashboardPage />}
           {activeTab === 'today' && <TodayPage />}
           {activeTab === 'subjects' && <SubjectsPage />}
+          {activeTab === 'class-finder' && <ClassFinderPage />}
           {activeTab === 'calendar' && <CalendarView />}
           {activeTab === 'completed' && <CompletedPage />}
           {activeTab === 'profile' && <ProfilePage />}

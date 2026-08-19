@@ -10,6 +10,7 @@ import {
   Sparkles,
   User,
   ShieldCheck,
+  MapPin,
 } from 'lucide-react';
 
 export const MobileNav: React.FC = () => {
@@ -30,6 +31,7 @@ export const MobileNav: React.FC = () => {
       badge: stats.overdue + stats.dueToday > 0 ? stats.overdue + stats.dueToday : undefined,
     },
     { id: 'subjects', label: 'COURSES', icon: BookOpen },
+    { id: 'class-finder', label: 'FINDER', icon: MapPin },
     { id: 'calendar', label: 'DATES', icon: CalendarDays },
     { id: 'ai-launch', label: 'AI LAUNCH', icon: Sparkles },
     { id: 'profile', label: 'USER', icon: User },
